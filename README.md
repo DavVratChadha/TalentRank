@@ -1,2 +1,2 @@
 # ai-recruiter
-An AI-driven system that swiftly identifies and recommends top candidates to match job requirements, enabling recruiters to efficiently shortlist for fast hiring.
+An advanced information retrieval and recommendation system designed to identify and recommend top candidates who align with job requirements. This system streamlines the recruitment process, enabling recruiters to efficiently shortlist candidates for fast hiring. By leveraging AI-driven algorithms, it analyzes applicant profiles and matches them with desired qualifications, ensuring a more effective and swift hiring experience.
