@@ -72,3 +72,47 @@ def extract_salary(text):
         return int(salary)
     
     return 0
+
+def skill_experience(str):
+    #idea is to bucketize the experience level
+    #if 0 to 1 year, set to 1
+    #if 2 to 3 years, set to 2
+    #if 4+ years, set to 3
+    
+    buckets = {"0 to 1 year": 1, "2 to 3 years": 2, "4+ years": 3}
+    return buckets[str]
+
+def degree_status(str):
+    #if yes, set to 1
+    #if no, set to 0
+    return 1 if str == "Yes" else 0
+
+def covid_vaccine(str):
+    #if yes, set to 1
+    #if no, set to 0
+    return 1 if str == "Yes" else 0
+
+def extract_skills(str):
+    #if expert, set to 3
+    #if intermediate, set to 2
+    #if novice, set to 1
+    buckets = {"Expert": 3, "Intermediate": 2, "Novice": 1}
+    return buckets[str]
+
+def stat_analysis(str):
+    #if yes, set to 1
+    #if no, set to 0
+    return 1 if str == "Yes" else 0
+
+def stat_experience(str):
+    #bucketize the experience level
+    #if 0 to 1 year, set to 1
+    #if 2 to 3 years, set to 2
+    #if 4+ years, set to 3
+    buckets = {"0 to 1 year": 1, "2 to 3 years": 2, "4+ years": 3}
+    return buckets[str]
+
+def legal_work(str):
+    #if yes, set to 1
+    #if no, set to 0
+    return 1 if str == "Yes" else 0
