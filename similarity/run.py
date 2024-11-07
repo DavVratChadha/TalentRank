@@ -14,6 +14,9 @@ def random_partition(target, n):
 target = pd.read_csv(DATA_DIR + "target.csv")
 target = target["target"].tolist()
 
+#remove 705
+# target.remove(705) #something feels wrong with this candidate, so removing it as its not like others
+
 #load vectors.pkl for vector as a dictionary
 with open(DATA_DIR + "vectors.pkl", "rb") as f:
     vectors = pickle.load(f)
@@ -38,8 +41,8 @@ similarity = []
 for candidate in vectors:
     vector = vectors[candidate]
     # similarity.append((candidate, sim.cosine_similarity(mean, vector))) #[(767, 69), (1209, 118), (1453, 134)], s=321
-    similarity.append((candidate, sim.euclidean_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
-    # similarity.append((candidate, sim.manhattan_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
+    # similarity.append((candidate, sim.euclidean_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
+    similarity.append((candidate, sim.manhattan_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
     # similarity.append((candidate, sim.inner_product_similarity(mean, vector))) #[(767, 257), (1209, 299), (1453, 315)], s=871
     # similarity.append((candidate, sim.minkowski_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
 
@@ -51,9 +54,9 @@ similarity = sorted(similarity, key=lambda x: x[1], reverse=True)
 indices = []
 s = 0
 for i, (c, d) in enumerate(similarity):
-    if c in test:
+    if c in target:
         indices.append((c,i))
         s += i
         
-print(f"{indices=}, {s=}")
+print(f"{indices=}, {s/11/1425=}")
 # print(mean)
