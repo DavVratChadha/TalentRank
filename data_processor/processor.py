@@ -66,10 +66,6 @@ def process():
         if out[0] == "covid_vaccine":
             continue #because its not consistent across all years
         candidates[row["Candidate Deidentified ID"]][out[0]] = out[1]
-        
-    # write dict to json
-    with open(f"{DATA_DIR}candidates.json", "w") as f:
-        json.dump(candidates, f, indent=4)
 
     #lets do some sanity check
     #check if all candidates have all the answers
@@ -81,11 +77,20 @@ def process():
 def vectorizer():
     #first run process
     candidates = process()
-    key_set = ["legal_work", "skill_experience", "stat_experience", "stat_analysis", "degree_status", "salary", "extract_skills"]
+    candidates = normalize_salary(candidates)
+    
+    # write dict to json
+    with open(f"{DATA_DIR}candidates.json", "w") as f:
+        json.dump(candidates, f, indent=4)
+    
+    # key_set = ["legal_work", "skill_experience", "stat_experience", "stat_analysis", "degree_status", "salary", "extract_skills"]
+    key_set = ["skill_experience", "stat_experience", "salary", "extract_skills"]
     
     #now for each candidate, build a vector of answers
     vectors = {}
     for candidate in candidates:
+        if candidates[candidate]["legal_work"] == 0 or candidates[candidate]["degree_status"] == 0 or candidates[candidate]["stat_analysis"] == 0:
+            continue
         vector = []
         for key in key_set:
             vector.append(candidates[candidate][key])
@@ -96,17 +101,22 @@ def vectorizer():
         pickle.dump(vectors, f)
 
 #open the json file, for all candidates, append the salary to a list, order the list, and print it
-def salary():
-    with open(f"{DATA_DIR}candidates.json", "r") as f:
-        candidates = json.load(f)
-    
+def normalize_salary(candidates):
     salaries = []
     for candidate in candidates:
-        salaries.append((candidate, candidates[candidate]["salary"]))
+        salaries.append(candidates[candidate]["salary"])
     
-    salaries.sort(key=lambda x: x[1])
-    print(salaries)
+    #find mean and std of salaries
+    mean = np.mean(salaries)
+    std = np.std(salaries)
+    
+    #normalize salaries
+    for candidate in candidates:
+        candidates[candidate]["salary"] = (candidates[candidate]["salary"] - mean) / std
+    
+    return candidates
+
 
 if __name__ == "__main__":
     vectorizer()
-    # salary()
+    

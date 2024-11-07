@@ -1,10 +1,14 @@
 import pandas as pd
 import pickle
 import numpy as np
-from  similarity_functions import cosine_similarity
+import similarity_functions as sim
 
 DATA_DIR = "data/"
 
+def random_partition(target, n):
+    np.random.seed(42)
+    np.random.shuffle(target)
+    return target[:n], target[n:]
 
 #load target.csv for target as a list
 target = pd.read_csv(DATA_DIR + "target.csv")
@@ -14,8 +18,11 @@ target = target["target"].tolist()
 with open(DATA_DIR + "vectors.pkl", "rb") as f:
     vectors = pickle.load(f)
 
+#partition target randomly into 8 and 3
+train, test = random_partition(target, 8)
+
 #mean and std of target vectors dict while target holds candidate ids
-target_vectors = [vectors[int(candidate)] for candidate in target[:8]]
+target_vectors = [vectors[int(candidate)] for candidate in train]
 # print(f"{target_vectors=}")
 mean = np.mean(target_vectors, axis=0)
 std = np.std(target_vectors, axis=0)
@@ -27,19 +34,26 @@ std = np.std(target_vectors, axis=0)
 #and return the top-k candidates
 #cosine similaity can be calculated with cosine_similarity(v1, v2) function in similarity/cosine.py
 
-distances = []
+similarity = []
 for candidate in vectors:
     vector = vectors[candidate]
-    distances.append((candidate, cosine_similarity(mean, vector)))
+    # similarity.append((candidate, sim.cosine_similarity(mean, vector))) #[(767, 69), (1209, 118), (1453, 134)], s=321
+    similarity.append((candidate, sim.euclidean_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
+    # similarity.append((candidate, sim.manhattan_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
+    # similarity.append((candidate, sim.inner_product_similarity(mean, vector))) #[(767, 257), (1209, 299), (1453, 315)], s=871
+    # similarity.append((candidate, sim.minkowski_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
 
-distances = sorted(distances, key=lambda x: x[1], reverse=True)
+similarity = sorted(similarity, key=lambda x: x[1], reverse=True)
 
 
-#need to find how low are target[8:] candidates in the sorted list of distances
+#need to find how low are test candidates in the sorted list of similarity
 #and return their index
 indices = []
-for i, (c, d) in enumerate(distances):
-    if c in target[8:]:
+s = 0
+for i, (c, d) in enumerate(similarity):
+    if c in test:
         indices.append((c,i))
-
-print(f"{indices=}")
+        s += i
+        
+print(f"{indices=}, {s=}")
+# print(mean)
