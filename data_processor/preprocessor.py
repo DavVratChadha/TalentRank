@@ -11,8 +11,10 @@ import re
 #any non-alpha numeric character, replace with space
 #if only text, set to nan
 
+BASE = 80000
+
 def extract_salary(text):
-    print(f"{text=}")
+    # print(f"{text=}")
     #replace , with nothing
     text = re.sub(r",", "", text)
     
@@ -26,7 +28,7 @@ def extract_salary(text):
     #if yr, year, annually, per annum, per year, in text, extract the number as annual salary
     if re.search(r"(yr|year|annually|per annum|per year)", text, re.IGNORECASE):
         #if k in text, extract the number and multiply by 1000
-        if re.search(r"k", text, re.IGNORECASE):
+        if re.search(r"\d+\s?k", text, re.IGNORECASE):
             salary = re.search(r"\d+", text).group()
             return int(salary) * 1000
         salary = re.search(r"\d+", text).group()
@@ -35,7 +37,7 @@ def extract_salary(text):
     #if hr, hourly, per hour, in text, extract the number as hourly salary then multiply by 40 hours per week and 52 weeks per year
     if re.search(r"(hr|hourly|per hour)", text, re.IGNORECASE):
         #if k in text, extract the number and multiply by 1000
-        if re.search(r"k", text, re.IGNORECASE):
+        if re.search(r"\d+\s?k", text, re.IGNORECASE):
             salary = re.search(r"\d+", text).group()
             return int(salary) * 1000
         salary = re.search(r"\d+", text).group()
@@ -56,7 +58,7 @@ def extract_salary(text):
             salary1, salary2 = re.findall(r"\d+", text)
             return (int(salary1) + int(salary2)) // 2
     
-    if re.search(r"k", text, re.IGNORECASE):
+    if re.search(r"\d+\s?k", text, re.IGNORECASE):
         salary = re.search(r"\d+", text).group()
         return int(salary) * 1000
     
@@ -71,7 +73,7 @@ def extract_salary(text):
             return int(salary) * 1000
         return int(salary)
     
-    return 0
+    return BASE
 
 def skill_experience(str):
     #idea is to bucketize the experience level
@@ -116,3 +118,8 @@ def legal_work(str):
     #if yes, set to 1
     #if no, set to 0
     return 1 if str == "Yes" else 0
+
+
+if __name__ == "__main__":
+    #test extract_salary
+    print(extract_salary("I'm looking to be compensated above $70000"))
