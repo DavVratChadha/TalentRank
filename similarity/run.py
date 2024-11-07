@@ -41,8 +41,8 @@ similarity = []
 for candidate in vectors:
     vector = vectors[candidate]
     # similarity.append((candidate, sim.cosine_similarity(mean, vector))) #[(767, 69), (1209, 118), (1453, 134)], s=321
-    # similarity.append((candidate, sim.euclidean_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
-    similarity.append((candidate, sim.manhattan_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
+    similarity.append((candidate, sim.euclidean_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
+    # similarity.append((candidate, sim.manhattan_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
     # similarity.append((candidate, sim.inner_product_similarity(mean, vector))) #[(767, 257), (1209, 299), (1453, 315)], s=871
     # similarity.append((candidate, sim.minkowski_similarity(mean, vector))) #[(767, 68), (1209, 118), (1453, 134)], s=320
 
@@ -58,5 +58,5 @@ for i, (c, d) in enumerate(similarity):
         indices.append((c,i))
         s += i
         
-print(f"{indices=}, {s/11/1425=}")
+print(f"{indices=}, {s/len(target)/1329=}")
 # print(mean)
