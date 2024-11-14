@@ -23,7 +23,7 @@ def extract_salary(text):
     
     #if only text or spaces, set to nan
     if re.match(r"^[^\d]+$", text):
-        return 0
+        return BASE
     
     #if yr, year, annually, per annum, per year, in text, extract the number as annual salary
     if re.search(r"(yr|year|annually|per annum|per year)", text, re.IGNORECASE):

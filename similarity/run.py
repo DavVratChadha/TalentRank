@@ -55,8 +55,32 @@ indices = []
 s = 0
 for i, (c, d) in enumerate(similarity):
     if c in target:
-        indices.append((c,i))
-        s += i
+        indices.append(i)
+        if i < 200:
+            s += 1
         
-print(f"{indices=}, {s/len(target)/1329=}")
+# print(f"{indices=}, {s/len(target)/len(vectors)=}")
+print(f"Recall = {round(s/len(target),4)}")
+
 # print(mean)
+
+
+#calculate MAP for the target candidates
+def calculate_map(similarity):
+    # Sort ranks to ensure they are in ascending order
+    ranks = [x + 1 for x in similarity]
+    # print(f"{ranks=}")
+    # Calculate precision at each relevant rank
+    precisions = []
+    for i, rank in enumerate(ranks, start=1):
+        precision_at_rank = i / rank
+        precisions.append(precision_at_rank)
+    
+    # print(f"{precisions=}")
+    # Calculate Mean Average Precision
+    map_score = sum(precisions) / len(ranks)
+    return map_score
+
+# Example usage:
+map_score = calculate_map(indices)
+print(f"Mean Average Precision (MAP): {round(map_score,4)}")
