@@ -4,6 +4,8 @@ import json
 import preprocessor
 import pickle
 import numpy as np
+from datetime import datetime
+import calendar
 
 DATA_DIR = "data/"
 MONTHS = {1: "January", 2: "February", 3: "March", 4: "April", 5: "May", 6: "June", 7: "July", 8: "August", 9: "September", 10: "October", 11: "November", 12: "December"}
@@ -13,16 +15,16 @@ def process():
     # Read the CSV file, ignoring the first column
     df1 = pd.read_csv(f"{DATA_DIR}screening_questions_1.csv", index_col=0)
     df2 = pd.read_csv(f"{DATA_DIR}screening_questions_2.csv", index_col=0)
-    df3 = pd.read_csv(f"{DATA_DIR}screening_questions_3.csv", index_col=0)
-    df4 = pd.read_csv(f"{DATA_DIR}screening_questions_4.csv", index_col=0)
-    df5 = pd.read_csv(f"{DATA_DIR}screening_questions_5.csv", index_col=0)
+    # df3 = pd.read_csv(f"{DATA_DIR}screening_questions_3.csv", index_col=0)
+    # df4 = pd.read_csv(f"{DATA_DIR}screening_questions_4.csv", index_col=0)
+    # df5 = pd.read_csv(f"{DATA_DIR}screening_questions_5.csv", index_col=0)
     
     #sort each df by Candidate Deidentified ID
     df1.sort_values("Candidate Deidentified ID", inplace=True)
     df2.sort_values("Candidate Deidentified ID", inplace=True)
-    df3.sort_values("Candidate Deidentified ID", inplace=True)
-    df4.sort_values("Candidate Deidentified ID", inplace=True)
-    df5.sort_values("Candidate Deidentified ID", inplace=True)
+    # df3.sort_values("Candidate Deidentified ID", inplace=True)
+    # df4.sort_values("Candidate Deidentified ID", inplace=True)
+    # df5.sort_values("Candidate Deidentified ID", inplace=True)
     
 
     #need to fix candidate deidentified id
@@ -32,21 +34,22 @@ def process():
     df2["Candidate Deidentified ID"] = df2["Candidate Deidentified ID"] + last_id1
     last_id2 = df2["Candidate Deidentified ID"].iloc[-1]
     #now add this id to the third file
-    df3["Candidate Deidentified ID"] = df3["Candidate Deidentified ID"] + last_id2
-    last_id3 = df3["Candidate Deidentified ID"].iloc[-1]
-    #now add this id to the fourth file
-    df4["Candidate Deidentified ID"] = df4["Candidate Deidentified ID"] + last_id3
-    last_id4 = df4["Candidate Deidentified ID"].iloc[-1]
-    #now add this id to the fifth file
-    df5["Candidate Deidentified ID"] = df5["Candidate Deidentified ID"] + last_id4
+    # df3["Candidate Deidentified ID"] = df3["Candidate Deidentified ID"] + last_id2
+    # last_id3 = df3["Candidate Deidentified ID"].iloc[-1]
+    # #now add this id to the fourth file
+    # df4["Candidate Deidentified ID"] = df4["Candidate Deidentified ID"] + last_id3
+    # last_id4 = df4["Candidate Deidentified ID"].iloc[-1]
+    # #now add this id to the fifth file
+    # df5["Candidate Deidentified ID"] = df5["Candidate Deidentified ID"] + last_id4
     
     print(f"DF2 starts at {last_id1=}")
     print(f"DF3 starts at {last_id2=}")
-    print(f"DF4 starts at {last_id3=}")
-    print(f"DF5 starts at {last_id4=}")
+    # print(f"DF4 starts at {last_id3=}")
+    # print(f"DF5 starts at {last_id4=}")
     
     #combine the dataframes in that order
-    df = pd.concat([df1, df2, df3, df4, df5])
+    df = pd.concat([df1, df2])
+    # df = pd.concat([df1, df2, df3, df4, df5])
     #remove duplicate rows
     df.drop_duplicates(inplace=True)
 
@@ -110,11 +113,23 @@ def process():
     # for candidate in candidates:
     #     #is assert fails, print candidate id
     #     assert len(candidates[candidate]) == 8, candidate
-    return candidates, last_id1, last_id2, last_id3, last_id4
+    return candidates, last_id1, last_id2
+    # return candidates, last_id1, last_id2, last_id3, last_id4
+
+def calculate_month_difference(start_month, start_year, end_month, end_year):
+    # Convert inputs into datetime objects
+    start_date = datetime(year=start_year, month=start_month, day=1)
+    end_date = datetime(year=end_year, month=end_month, day=1)
+    
+    # Calculate the difference in months
+    month_difference = (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
+    return month_difference
 
 def vectorizer():
+    last_id1, last_id2, last_id3, last_id4 = 0, 0, 0, 0
     #first run process
-    candidates, last_id1, last_id2, last_id3, last_id4 = process()
+    # candidates, last_id1, last_id2, last_id3, last_id4 = process()
+    candidates, last_id1, last_id2 = process()
     candidates = normalize_salary(candidates)
     candidates = normalize_screening_score(candidates)
     
@@ -124,7 +139,11 @@ def vectorizer():
     for candidate in list(candidates.keys()):
         if candidates[candidate]["legal_work"] == 0 or candidates[candidate]["degree_status"] == 0 or candidates[candidate]["stat_analysis"] == 0:
             del candidates[candidate]
-        
+    
+    # round up years of experience
+    for candidate in candidates:
+        candidates[candidate]["yrs_of_experience"] = round(candidates[candidate]["yrs_of_experience"])
+                
     print(f"{len(candidates)=}")
     # write dict to json
     with open(f"{DATA_DIR}candidates.json", "w") as f:
@@ -132,7 +151,7 @@ def vectorizer():
     
     # key_set = ["legal_work", "skill_experience", "stat_experience", "stat_analysis", "degree_status", "salary", "extract_skills", "Screening Form Total Score"]
     # key_set = ["skill_experience", "stat_experience", "salary", "extract_skills", "Screening Form Total Score"]
-    key_set = ["skill_experience", "stat_experience", "salary", "extract_skills"]
+    key_set = ["skill_experience", "stat_experience", "salary", "extract_skills", "yrs_of_experience"]
     
     #now for each candidate, build a vector of answers
     vectors = {}
@@ -179,29 +198,30 @@ def normalize_screening_score(candidates):
     return candidates
 
 
-def gather_education_details(candidates, last_id1, last_id2, last_id3, last_id4):
+def gather_education_details(candidates, last_id1 = 0, last_id2 = 0, last_id3 = 0, last_id4 = 0):
     #extract education details as a df from csv
     df1 = pd.read_csv(f"{DATA_DIR}education_details_1.csv")
     df2 = pd.read_csv(f"{DATA_DIR}education_details_2.csv")
-    df3 = pd.read_csv(f"{DATA_DIR}education_details_3.csv")
-    df4 = pd.read_csv(f"{DATA_DIR}education_details_4.csv")
-    df5 = pd.read_csv(f"{DATA_DIR}education_details_5.csv")
+    # df3 = pd.read_csv(f"{DATA_DIR}education_details_3.csv")
+    # df4 = pd.read_csv(f"{DATA_DIR}education_details_4.csv")
+    # df5 = pd.read_csv(f"{DATA_DIR}education_details_5.csv")
     
     #sort each df by Candidate Deidentified ID
     df1.sort_values("Candidate Deidentified ID", inplace=True)
     df2.sort_values("Candidate Deidentified ID", inplace=True)
-    df3.sort_values("Candidate Deidentified ID", inplace=True)
-    df4.sort_values("Candidate Deidentified ID", inplace=True)
-    df5.sort_values("Candidate Deidentified ID", inplace=True)
+    # df3.sort_values("Candidate Deidentified ID", inplace=True)
+    # df4.sort_values("Candidate Deidentified ID", inplace=True)
+    # df5.sort_values("Candidate Deidentified ID", inplace=True)
     
     #fix candidate deidentified id
     df2["Candidate Deidentified ID"] = df2["Candidate Deidentified ID"] + last_id1
-    df3["Candidate Deidentified ID"] = df3["Candidate Deidentified ID"] + last_id2
-    df4["Candidate Deidentified ID"] = df4["Candidate Deidentified ID"] + last_id3
-    df5["Candidate Deidentified ID"] = df5["Candidate Deidentified ID"] + last_id4
+    # df3["Candidate Deidentified ID"] = df3["Candidate Deidentified ID"] + last_id2
+    # df4["Candidate Deidentified ID"] = df4["Candidate Deidentified ID"] + last_id3
+    # df5["Candidate Deidentified ID"] = df5["Candidate Deidentified ID"] + last_id4
     
     #combine the dataframes
-    df = pd.concat([df1, df2, df3, df4, df5])
+    # df = pd.concat([df1, df2, df3, df4, df5])
+    df = pd.concat([df1, df2])
     df.drop("Unnamed: 0", axis=1, inplace=True)
     # print(df.tail(10))
     df.drop_duplicates(inplace=True)    
@@ -229,29 +249,30 @@ def gather_education_details(candidates, last_id1, last_id2, last_id3, last_id4)
     
     return candidates
 
-def gather_work_details(candidates, last_id1, last_id2, last_id3, last_id4):
+def gather_work_details(candidates, last_id1 = 0, last_id2 = 0, last_id3 = 0, last_id4 = 0):
     #extract work details as a df from csv
     df1 = pd.read_csv(f"{DATA_DIR}work_details_1.csv")
     df2 = pd.read_csv(f"{DATA_DIR}work_details_2.csv")
-    df3 = pd.read_csv(f"{DATA_DIR}work_details_3.csv")
-    df4 = pd.read_csv(f"{DATA_DIR}work_details_4.csv")
-    df5 = pd.read_csv(f"{DATA_DIR}work_details_5.csv")
+    # df3 = pd.read_csv(f"{DATA_DIR}work_details_3.csv")
+    # df4 = pd.read_csv(f"{DATA_DIR}work_details_4.csv")
+    # df5 = pd.read_csv(f"{DATA_DIR}work_details_5.csv")
     
     #sort each df by Candidate Deidentified ID
     df1.sort_values("Candidate Deidentified ID", inplace=True)
     df2.sort_values("Candidate Deidentified ID", inplace=True)
-    df3.sort_values("Candidate Deidentified ID", inplace=True)
-    df4.sort_values("Candidate Deidentified ID", inplace=True)
-    df5.sort_values("Candidate Deidentified ID", inplace=True)
+    # df3.sort_values("Candidate Deidentified ID", inplace=True)
+    # df4.sort_values("Candidate Deidentified ID", inplace=True)
+    # df5.sort_values("Candidate Deidentified ID", inplace=True)
     
     #fix candidate deidentified id
     df2["Candidate Deidentified ID"] = df2["Candidate Deidentified ID"] + last_id1
-    df3["Candidate Deidentified ID"] = df3["Candidate Deidentified ID"] + last_id2
-    df4["Candidate Deidentified ID"] = df4["Candidate Deidentified ID"] + last_id3
-    df5["Candidate Deidentified ID"] = df5["Candidate Deidentified ID"] + last_id4
+    # df3["Candidate Deidentified ID"] = df3["Candidate Deidentified ID"] + last_id2
+    # df4["Candidate Deidentified ID"] = df4["Candidate Deidentified ID"] + last_id3
+    # df5["Candidate Deidentified ID"] = df5["Candidate Deidentified ID"] + last_id4
     
     #combine the two dataframes
-    df = pd.concat([df1, df2, df3, df4, df5])
+    # df = pd.concat([df1, df2, df3, df4, df5])
+    df = pd.concat([df1, df2])
     #drop the Unnamed: 0 column
     df.drop("Unnamed: 0", axis=1, inplace=True)
     df.drop_duplicates(inplace=True)
@@ -274,6 +295,7 @@ def gather_work_details(candidates, last_id1, last_id2, last_id3, last_id4):
         candidate = row["Candidate Deidentified ID"]
         if candidate in candidates:
             candidates[candidate]["work_history"] = f'{candidates[candidate].get("work_history", "")}Company Number: {int(row["Work Company Name Deidentified ID"])}, Work Title: {row["Work History Title"]}, Start: {MONTHS[int(row["Work History Start Month"])]} {int(row["Work History Start Year"])}, End: {MONTHS[int(row["Work History End Month"])]} {int(row["Work History End Year"])};\n'
+            candidates[candidate]["yrs_of_experience"] = candidates[candidate].get("yrs_of_experience", 0) + calculate_month_difference(int(row["Work History Start Month"]), int(row["Work History Start Year"]), int(row["Work History End Month"]), int(row["Work History End Year"])) / 12
     
     #remove candidates without education details
     for candidate in list(candidates.keys()):
