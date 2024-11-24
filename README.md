@@ -26,7 +26,7 @@ This package requires candidate education details, work details, candidate
 To rank candidates, use the following command:
 
 ```sh
-talentrank --rank_type <rank_type> --k <number_of_candidates> --data_dir <data_directory> --education_file <education_file> --work_file <work_file> --screening_questions_file <screening_questions_file> --job_details_file <job_details_file>
+talentrank --rank_type <rank_type> --k <number_of_candidates> --education_file <education_file> --work_file <work_file> --screening_questions_file <screening_questions_file> --job_details_file <job_details_file>
 ```
 
 ### Options
