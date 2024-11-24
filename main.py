@@ -66,6 +66,7 @@ class IRSystem(metaclass=abc.ABCMeta):
         OUTPUT:
             None
         """
+        print("Encoding and indexing candidates. This may take a while...")
         for candidate in self.candidates:
             self.index_sys.add(ids = candidate,
                                 embeddings = (3*self.model.encode(self.candidates[candidate]["education"]) + 5*self.model.encode(self.candidates[candidate]["work_history"]) - 2*self.model.encode(f'Years of Experience = {self.candidates[candidate]["yrs_of_experience"]}')).tolist())
@@ -180,8 +181,12 @@ class IRSystem(metaclass=abc.ABCMeta):
         return r4_ranking_list
 
     def reranking(self, ranked_list):
-        with open("blacklist.json", "r") as f:
-            blacklist = json.load(f)
+        try:
+            with open("blacklist.json", "r") as f:
+                blacklist = json.load(f)
+        except FileNotFoundError:
+            return ranked_list #nothing to blacklist
+        
         #if blacklist is empty, return the ranked_list
         if blacklist == {"educational_institution": [], "work_company": []}:
             return ranked_list

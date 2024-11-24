@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='talentrank',
-    version='0.0.1',
+    version='0.0.2',
     author='Dav Vrat Chadha',
     author_email='davvratchadha1@gmail.com',
     description='An advanced information retrieval and recommendation system for ranking job candidates.',
@@ -18,9 +18,10 @@ setup(
     python_requires='>=3.8',
     install_requires=[
         'chromadb>=0.5.20',
-        'pandas>=1.5.3',
-        'numpy>=1.26.0',
-        'sentence-transformers>=2.2.2'
+        'pandas>=2.2.3',
+        'numpy>=2.1.3',
+        'sentence-transformers>=3.3.1',
+        'openpyxl>=3.1.5',
     ],
     entry_points={
         'console_scripts': [

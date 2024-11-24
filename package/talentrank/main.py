@@ -178,8 +178,12 @@ class IRSystem(metaclass=abc.ABCMeta):
         return r4_ranking_list
 
     def reranking(self, ranked_list):
-        with open("blacklist.json", "r") as f:
-            blacklist = json.load(f)
+        try:
+            with open("blacklist.json", "r") as f:
+                blacklist = json.load(f)
+        except FileNotFoundError:
+            return ranked_list #nothing to blacklist
+        
         #if blacklist is empty, return the ranked_list
         if blacklist == {"educational_institution": [], "work_company": []}:
             return ranked_list
