@@ -1,7 +1,7 @@
 import pandas as pd
 from collections import defaultdict
 import json
-import preprocessor
+import data_processor.preprocessor as preprocessor
 import pickle
 import numpy as np
 from datetime import datetime
@@ -116,7 +116,7 @@ def vectorizer(data_dir):
         vectors[candidate] = np.array(vector)
     
     #write vectors to pickle
-    path = os.path.join(data_dir, "vector.pkl")
+    path = os.path.join(data_dir, "vectors.pkl")
     with open(path, "wb") as f:
         pickle.dump(vectors, f)
 

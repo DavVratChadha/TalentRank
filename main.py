@@ -31,17 +31,17 @@ class IRSystem(metaclass=abc.ABCMeta):
     IRSystem class to be use for TalentRank
     """
 
-    def __init__(self, data_dir, edu_file, work_file, screening_ques):
+    def __init__(self, data_dir, edu_file, work_file, screening_ques, rank_type):
         self.data_dir = data_dir
-        dc.format_it_correctly_because_stakeholders_are_watching(edu_file, work_file, screening_ques)
+        dc.format_it_correctly_because_stakeholders_are_watching(edu_file, work_file, screening_ques, self.data_dir)
         processor.vectorizer(self.data_dir)
-        self.model_id = "jjzha/jobbert_skill_extraction"
-        self.model = SentenceTransformer(self.model_id)
         self.candidates = json.load(open(os.path.join(self.data_dir, "candidates.json"), "r"))
         self.n = len(self.candidates)
-        self.create_index()
-        self.create_parser_searcher()
-
+        if rank_type != "r3":
+            self.model_id = "jjzha/jobbert_skill_extraction"
+            self.model = SentenceTransformer(self.model_id)
+            self.create_index()
+            self.create_parser_searcher()
 
     def create_index(self):
         """
@@ -187,7 +187,9 @@ class IRSystem(metaclass=abc.ABCMeta):
         if blacklist == {"educational_institution": [], "work_company": []}:
             return ranked_list
         
+        new_ranked_list = []
         for candidate in ranked_list:
+            remove = False
             #use regex to find pattern College Name: <some text>; and extract <some text>
             pattern = re.compile(r"College Name: (.*?);")
             # find all matches
@@ -195,30 +197,42 @@ class IRSystem(metaclass=abc.ABCMeta):
             for match in matches:
                 if match.lower() in blacklist["educational_institution"]:
                     ranked_list.remove(candidate)
+                    remove = True
+                    break
+            if remove:
+                continue
+            #also do it for work_history
+            pattern = re.compile(r"Company Name: (.*?),")
+            matches = pattern.findall(self.candidates[candidate]["work_history"])
+            for match in matches:
+                if match.lower() in blacklist["work_company"]:
+                    ranked_list.remove(candidate)
+                    remove = True
                     break
             
-            #also do it for work_history
-            pattern = re.compile(r"Company Name: (.*?);")
-            matches = pattern.findall(self.candidates[candidate]["work_history"])
-            for match.lower() in matches:
-                if match in blacklist["work_company"]:
-                    ranked_list.remove(candidate)
-                    break
-        return ranked_list
+            if not remove:
+                new_ranked_list.append(candidate)
+        return new_ranked_list
 
 
 def rank_candidates(rank_type="merged", k=200, data_dir="data/", edu_file = "education_details.xlsx", work_file = "work_details.xlsx", screening_ques = "screening_questions.xlsx", job_details_file = "job_details.txt"):
-    job_details = jdp.process_job_deats(data_dir=data_dir, filename=job_details_file)
-    talentrank = IRSystem(data_dir, edu_file, work_file, screening_ques)
-    talentrank.add_files()
+    talentrank = IRSystem(data_dir, edu_file, work_file, screening_ques, rank_type)
 
     if rank_type == "merged":
+        job_details = jdp.process_job_deats(job_details_file)
+        talentrank.add_files()
         r1_ranking_list = talentrank.perform_search(job_details=job_details)
         r2_ranking_list = talentrank.perform_search()
         r3_ranking_list = talentrank.r3_ranking()
         final_ranking = talentrank.final_rank(r1_ranking_list, r2_ranking_list, r3_ranking_list)
     elif rank_type == "r1":
+        job_details = jdp.process_job_deats(job_details_file)
+        talentrank.add_files()
         final_ranking = talentrank.perform_search(job_details=job_details)
+    
+    elif rank_type == "r2":
+        talentrank.add_files()
+        final_ranking = talentrank.perform_search()
     
     elif rank_type == "r3":
         final_ranking = talentrank.r3_ranking()
@@ -242,8 +256,12 @@ def main(rank_type, k, data_dir, education_file, work_file, screening_questions_
     top_k = rank_candidates(rank_type=rank_type, k=k, data_dir=data_dir, edu_file=education_file, work_file=work_file, screening_ques=screening_questions_file, job_details_file=job_details_file)
     
     #write to a file
-    path = os.path.join(data_dir, "top_candidates.txt")
-    with open(path, "w") as f:
+    with open("top_candidates.txt", "w") as f:
         f.write("\n".join(top_k))
     
+    print(f"Found {len(top_k)} good candidates.")
     print("Top candidates written to top_candidates.txt")
+
+
+if __name__ == "__main__":
+    main()

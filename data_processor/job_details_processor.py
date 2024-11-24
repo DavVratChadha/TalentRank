@@ -1,10 +1,8 @@
 import re
 import os
 
-def process_job_deats(data_dir, filename):
-    #read job_details.txt
-    path = os.path.join(data_dir, filename)
-    with open(path, "r") as f:
+def process_job_deats(filename):
+    with open(filename, "r") as f:
         job_details = f.read()
 
     #extract Position Available:      Business Intelligence Analyst    
