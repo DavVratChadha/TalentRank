@@ -1,4 +1,4 @@
-# ai-recruiter
+# TalentRank
 
 An advanced information retrieval and recommendation system designed to identify and recommend top candidates who align with job requirements. This system streamlines the recruitment process, enabling recruiters to efficiently shortlist candidates for fast hiring. By leveraging AI-driven algorithms, it analyzes applicant profiles and matches them with desired qualifications, ensuring a more effective and swift hiring experience.
 
@@ -17,6 +17,10 @@ An advanced information retrieval and recommendation system designed to identify
     pip install talentrank
     ```
 
+## Data Requirement
+
+This package requires candidate education details, work details, candidate 
+
 ## Usage
 
 To rank candidates, use the following command:
@@ -29,31 +33,16 @@ talentrank --rank_type <rank_type> --k <number_of_candidates> --data_dir <data_d
 
 - `--rank_type`: Type of ranking to perform. Options: `merged`, `r1`, `r2`, `r3` . More details about these in report attached in this repo. Default is `merged`.
 - `--k`: Number of candidates to rank. Default is `200`.
-- `--data_dir`: Directory where the data is/will be stored. Default is 
 
-data
+- `--education_file`: Name of the education details file. Must be a xlsx. Default is **education_details.xlsx**
 
-.
-- `--education_file`: Name of the education details file. Must be a xlsx. Default is 
+- `--work_file`: Name of the work details file. Must be a xlsx. Default is **work_details.xlsx**
 
-education_details.xlsx
+- `--screening_questions_file`: Name of the screening questions file. Must be a xlsx. Default is **screening_questions.xlsx**
 
-.
-- `--work_file`: Name of the work details file. Must be a xlsx. Default is 
+- `--job_details_file`: Name of the job details file. Must be a xlsx. Default is **job_details.txt**
 
-work_details.xlsx
 
-.
-- `--screening_questions_file`: Name of the screening questions file. Must be a xlsx. Default is 
-
-screening_questions.xlsx
-
-.
-- `--job_details_file`: Name of the job details file. Must be a xlsx. Default is 
-
-job_details.txt
-
-.
 
 ### Example
 
@@ -84,15 +73,14 @@ Example `blacklist.json`:
 }
 ```
 
+## System Design
+![System Design](talentrank/data/system_design.png)
+
 ## License
 
-This project is licensed under the MIT License - see the 
-
-LICENSE
-
- file for details.
+This project is licensed under the MIT License - see the  LICENSE file for details.
 
 
 ## Acknowledgments
 
-- Thanks to the Pun S., Ken Kato, and Jason Chen for their valuable work and support.
+Thanks to the Pun Sukcharoenchaikul, Ken Kato, and Jason Chen for their valuable work and support.

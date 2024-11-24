@@ -1,4 +1,0 @@
-chromadb>=0.5.20
-pandas>=1.5.3
-numpy>=1.26.0
-sentence-transformers>=2.2.2

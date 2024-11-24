@@ -1,0 +1,2 @@
+include talentrank/data/business_analyst_target_vector.pkl
+include talentrank/data/system_design.png
