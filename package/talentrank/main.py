@@ -7,7 +7,6 @@ warnings.filterwarnings("ignore")
 logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
 transformers_logging.set_verbosity_error()
 
-import os
 import abc
 import numpy as np
 import chromadb
@@ -15,12 +14,17 @@ import json
 from sentence_transformers import SentenceTransformer
 from collections import defaultdict
 import pickle
-import similarity.similarity_functions as sim
-import data_processor.job_details_processor as jdp
-import data_processor.processor as processor
-import util.data_cleaner as dc
+import talentrank.similarity.similarity_functions as sim
+import talentrank.data_processor.job_details_processor as jdp
+import talentrank.data_processor.processor as processor
+import talentrank.util.data_cleaner as dc
 import click
 import re
+import importlib.resources
+
+# Access the file dynamically
+with importlib.resources.path('talentrank.data', 'business_analyst_target_vector.pkl') as file_path:
+    PKL_PATH = str(file_path)
 
 #fixing seeds to 42
 np.random.seed(42)
@@ -31,11 +35,10 @@ class IRSystem(metaclass=abc.ABCMeta):
     IRSystem class to be use for TalentRank
     """
 
-    def __init__(self, data_dir, edu_file, work_file, screening_ques, rank_type):
-        self.data_dir = data_dir
-        dc.format_it_correctly_because_stakeholders_are_watching(edu_file, work_file, screening_ques, self.data_dir)
-        processor.vectorizer(self.data_dir)
-        self.candidates = json.load(open(os.path.join(self.data_dir, "candidates.json"), "r"))
+    def __init__(self, edu_file, work_file, screening_ques, rank_type):
+        dc.format_it_correctly_because_stakeholders_are_watching(edu_file, work_file, screening_ques)
+        processor.vectorizer()
+        self.candidates = json.load(open("candidates.json", "r"))
         self.n = len(self.candidates)
         if rank_type != "r3":
             self.model_id = "jjzha/jobbert_skill_extraction"
@@ -95,20 +98,17 @@ class IRSystem(metaclass=abc.ABCMeta):
         if job_details is not None:
             query_embeddings = self.query_parser.encode(job_details).tolist()
         else:
-            path = os.path.join(self.data_dir, "business_analyst_target_vector.pkl")
-            with open(path, "rb") as f:
+            with open(PKL_PATH, "rb") as f:
                 mean_vecs = pickle.load(f)
                 query_embeddings = np.array(mean_vecs["r2"])
         topicResults = self.searcher.query(query_embeddings=query_embeddings, n_results=self.n)
         return topicResults["ids"][0]
 
     def r3_ranking(self):
-        path = os.path.join(self.data_dir, "vectors.pkl")
-        with open(path, "rb") as f:
+        with open("vectors.pkl", "rb") as f:
             vectors = pickle.load(f)
 
-        path = os.path.join(self.data_dir, "business_analyst_target_vector.pkl")
-        with open(path, "rb") as f:
+        with open(PKL_PATH, "rb") as f:
             mean_vecs = pickle.load(f)
 
         mean = np.array(mean_vecs["r3"])
@@ -123,8 +123,7 @@ class IRSystem(metaclass=abc.ABCMeta):
         return r3_ranking_list
 
     def create_candidate_embeddings(self):
-        path = os.path.join(self.data_dir, "candidates.json")
-        with open(path, "r") as f:
+        with open("candidates.json", "r") as f:
             candidates = json.load(f)
 
         #encode the education and work history of each candidate
@@ -134,8 +133,7 @@ class IRSystem(metaclass=abc.ABCMeta):
             candidate_embeddings[candidate_id]["embedding"] = (3*self.model.encode(candidate["education"]) + 5*self.model.encode(candidate["work_history"]) - 2*self.model.encode(f'Years of Experience = {candidate["yrs_of_experience"]}')).tolist()
 
         #write to a new json
-        path = os.path.join(self.data_dir, "candidate_embeddings.json")
-        with open(path, "w") as f:
+        with open("candidate_embeddings.json", "w") as f:
             json.dump(candidate_embeddings, f)
         return candidate_embeddings
 
@@ -214,8 +212,8 @@ class IRSystem(metaclass=abc.ABCMeta):
         return new_ranked_list
 
 
-def rank_candidates(rank_type="merged", k=200, data_dir="data/", edu_file = "education_details.xlsx", work_file = "work_details.xlsx", screening_ques = "screening_questions.xlsx", job_details_file = "job_details.txt"):
-    talentrank = IRSystem(data_dir, edu_file, work_file, screening_ques, rank_type)
+def rank_candidates(rank_type="merged", k=200, edu_file = "education_details.xlsx", work_file = "work_details.xlsx", screening_ques = "screening_questions.xlsx", job_details_file = "job_details.txt"):
+    talentrank = IRSystem(edu_file, work_file, screening_ques, rank_type)
 
     if rank_type == "merged":
         job_details = jdp.process_job_deats(job_details_file)
@@ -246,20 +244,19 @@ def rank_candidates(rank_type="merged", k=200, data_dir="data/", edu_file = "edu
 @click.command()
 @click.option("--rank_type", default="merged", help="Type of ranking to perform. Options: merged, r1")
 @click.option("--k", default=200, help="Number of candidates to rank")
-@click.option("--data_dir", default="data/", help="Directory where the data is/will be stored")
 @click.option("--education_file", default="education_details.xlsx", help="Name of the education details file")
 @click.option("--work_file", default="work_details.xlsx", help="Name of the work details file")
 @click.option("--screening_questions_file", default="screening_questions.xlsx", help="Name of the screening questions file")
 @click.option("--job_details_file", default="job_details.txt", help="Name of the job details file")
 @click.option("--blacklist", is_flag=True, help="Use this flag to generate empty json to blacklist candidates")
-def main(rank_type, k, data_dir, education_file, work_file, screening_questions_file, job_details_file, blacklist):
+def main(rank_type, k, education_file, work_file, screening_questions_file, job_details_file, blacklist):
     if blacklist:
         with open("blacklist.json", "w") as f:
             json.dump({"educational_institution": [], "work_company": []}, f)
         print("Blacklist file generated.")
         return
     
-    top_k = rank_candidates(rank_type=rank_type, k=k, data_dir=data_dir, edu_file=education_file, work_file=work_file, screening_ques=screening_questions_file, job_details_file=job_details_file)
+    top_k = rank_candidates(rank_type=rank_type, k=k, edu_file=education_file, work_file=work_file, screening_ques=screening_questions_file, job_details_file=job_details_file)
     #write to a file
     with open("top_candidates.txt", "w") as f:
         f.write("\n".join(top_k))
